@@ -1,0 +1,2633 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAH75IfKXOzbRJV-PAC85EdM7hr9qNRS10",
+    authDomain: "ielts-tracker-daveesp.firebaseapp.com",
+    databaseURL: "https://ielts-tracker-daveesp-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "ielts-tracker-daveesp",
+    storageBucket: "ielts-tracker-daveesp.firebasestorage.app",
+    messagingSenderId: "710127549102",
+    appId: "1:710127549102:web:e6e2e6ad7baa319401cb3f"
+  };
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = getDatabase(app);
+  window._fbDb = db;
+  window._fbRef = ref;
+  window._fbSet = set;
+  window._fbOnValue = onValue;
+  window._fbReady = true;
+  document.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════════ */
+:root {
+  --cream: #f8f7ff;
+  --cream2: #f0effe;
+  --cream3: #e2e0f5;
+  --white: #ffffff;
+  --border: rgba(99,88,200,0.1);
+  --border2: rgba(99,88,200,0.2);
+  --ink: #1e1b4b;
+  --ink2: #4c4980;
+  --ink3: #9491b8;
+  --gold: #7c5c00;
+  --gold-light: #d4a017;
+  --blue: #2563eb;
+  --blue-bg: #eff6ff;
+  --green: #16803c;
+  --green-bg: #f0fdf4;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --rose: #be185d;
+  --rose-bg: #fdf2f8;
+  --purple: #6d28d9;
+  --purple-bg: #f5f3ff;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --sidebar-w: 234px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 8px rgba(99,88,200,0.09), 0 0 0 1px rgba(99,88,200,0.06);
+  --shadow-md: 0 4px 24px rgba(99,88,200,0.14), 0 0 0 1px rgba(99,88,200,0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: linear-gradient(135deg, #f8f7ff 0%, #f0effe 100%);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════════ */
+#app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #ffffff 0%, #faf9ff 100%);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform .3s cubic-bezier(0.4,0,0.2,1);
+  z-index: 50;
+  box-shadow: 2px 0 16px rgba(99,88,200,0.07);
+}
+
+.sidebar-logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
+}
+.logo-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 5px;
+  opacity: 0.7;
+}
+.logo-title {
+  font-family: 'Lora', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.logo-title:hover .edit-inline-btn { opacity: 1; }
+.logo-dot { width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), #818cf8); flex-shrink: 0; box-shadow: 0 0 0 2px rgba(109,40,217,0.15); }
+
+.sidebar-sync {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--cream2);
+}
+.sync-row { display: flex; gap: 6px; align-items: center; }
+.sync-input {
+  flex: 1;
+  font-size: 11px;
+  padding: 5px 8px;
+  border: 1.5px solid var(--border2);
+  border-radius: 7px;
+  background: var(--white);
+  color: var(--ink);
+  min-width: 0;
+}
+.sync-input:focus { outline: none; border-color: var(--purple); }
+.sync-btn {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: none;
+  background: linear-gradient(135deg, var(--purple), #818cf8);
+  color: var(--white);
+  font-weight: 500;
+  cursor: pointer;
+}
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--ink3);
+  margin-top: 5px;
+  font-family: 'DM Mono', monospace;
+}
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; }
+.sync-dot.ok { background: var(--green); }
+.sync-dot.err { background: var(--danger); }
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+.nav-section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding: 10px 16px 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 0;
+  color: var(--ink2);
+  font-size: 13px;
+  font-weight: 400;
+  transition: all .15s;
+  position: relative;
+  user-select: none;
+}
+.nav-item:hover { background: var(--cream2); color: var(--ink); }
+.nav-item.active {
+  background: linear-gradient(90deg, var(--purple-bg), transparent);
+  color: var(--purple);
+  font-weight: 500;
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 3px;
+  background: var(--purple);
+  border-radius: 0 3px 3px 0;
+}
+.nav-icon { font-size: 14px; flex-shrink: 0; opacity: 0.7; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--purple);
+  color: var(--white);
+}
+.nav-item .edit-inline-btn { margin-left: auto; }
+.nav-item:not(:hover) .edit-inline-btn { opacity: 0; }
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  box-shadow: 0 1px 12px rgba(99,88,200,0.07);
+}
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--ink2);
+  padding: 4px;
+  line-height: 1;
+}
+.topbar-title {
+  font-family: 'Lora', serif;
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+  cursor: pointer;
+}
+.topbar-title:hover .edit-inline-btn { opacity: 1; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--cream2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--ink2);
+  cursor: text;
+  transition: border-color .2s, box-shadow .2s;
+}
+.topbar-search:focus-within {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(109,40,217,0.1);
+  background: var(--white);
+}
+.topbar-search input {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--ink);
+  width: 180px;
+}
+.topbar-search input::placeholder { color: var(--ink3); }
+.search-clear-btn {
+  background: none;
+  border: none;
+  color: var(--ink3);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 2px;
+  display: none;
+  line-height: 1;
+  border-radius: 4px;
+}
+.search-clear-btn:hover { color: var(--ink2); background: var(--cream3); }
+.filter-select {
+  font-size: 12px;
+  padding: 7px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--cream2);
+  color: var(--ink2);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .2s;
+}
+.filter-select:focus { border-color: var(--purple); }
+
+/* ── PAGE CONTENT ── */
+.page { display: none; flex: 1; padding: 28px 28px 48px; animation: fadeIn .25s ease; background: transparent; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── EDIT INLINE ── */
+.edit-inline-btn {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--ink3);
+  opacity: 0;
+  transition: opacity .15s, color .15s, background .15s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.edit-inline-btn:hover { background: var(--purple-bg); color: var(--purple); border-color: rgba(109,40,217,0.3); }
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD PAGE
+═══════════════════════════════════════════════════════════ */
+.dash-greeting {
+  margin-bottom: 24px;
+}
+.dash-date {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+  margin-bottom: 4px;
+}
+.dash-heading {
+  font-family: 'Lora', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dash-heading:hover .edit-inline-btn { opacity: 1; }
+.dash-subheading {
+  font-size: 13px;
+  color: var(--ink2);
+  margin-top: 3px;
+}
+
+/* Global Progress */
+.global-progress-card {
+  background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 60%, #4f46e5 100%);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  box-shadow: 0 8px 32px rgba(79,70,229,0.3);
+}
+.gp-pct {
+  font-family: 'Lora', serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.gp-pct span { font-size: 20px; color: rgba(255,255,255,0.5); }
+.gp-right { flex: 1; min-width: 200px; }
+.gp-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+}
+.gp-bar-wrap { height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.gp-bar-fill { height: 100%; background: var(--gold-light); border-radius: 2px; transition: width .6s cubic-bezier(0.4,0,0.2,1); }
+.gp-sub { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+/* Dashboard grid */
+.dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+@media(max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
+
+/* Widget card */
+.widget-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .2s, transform .2s;
+}
+.widget-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.widget-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.widget-card.blue::before { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.widget-card.green::before { background: linear-gradient(90deg, #16803c, #4ade80); }
+.widget-card.gold::before { background: linear-gradient(90deg, #d4a017, #fcd34d); }
+.widget-card.rose::before { background: linear-gradient(90deg, #be185d, #f472b6); }
+
+.wc-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+.wc-title {
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.wc-sub { font-size: 12px; color: var(--ink2); margin-bottom: 14px; }
+.wc-countdown {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--ink2);
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.countdown-part { text-align: center; }
+.countdown-num {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.countdown-unit { font-size: 9px; color: var(--ink3); letter-spacing: 1px; text-transform: uppercase; }
+
+.wc-edit-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  background: none;
+  color: var(--ink2);
+}
+.wc-edit-btn:hover { background: var(--cream2); }
+
+/* Quote widget */
+.quote-text {
+  font-family: 'Lora', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.quote-author { font-size: 12px; color: var(--ink3); }
+.quote-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* Daily reminder */
+.reminder-empty { font-size: 13px; color: var(--ink3); text-align: center; padding: 16px 0; }
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.reminder-item:last-child { border-bottom: none; }
+.reminder-priority {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+.pri-high { background: var(--danger-bg); color: var(--danger); }
+.pri-med { background: var(--amber-bg); color: var(--amber); }
+.pri-low { background: var(--green-bg); color: var(--green); }
+.reminder-name { flex: 1; font-weight: 500; }
+.reminder-page { font-size: 11px; color: var(--ink3); }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE HEADER (shared)
+═══════════════════════════════════════════════════════════ */
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ph-left {}
+.ph-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 6px;
+}
+.ph-title {
+  font-family: 'Lora', serif;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.ph-title:hover .edit-inline-btn { opacity: 1; }
+.ph-sub { font-size: 13px; color: var(--ink2); margin-top: 4px; }
+.ph-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Progress bar (page level) */
+.page-progress { margin-bottom: 22px; }
+.pp-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink2); margin-bottom: 5px; }
+.pp-bar { height: 5px; background: var(--cream3); border-radius: 3px; overflow: hidden; }
+.pp-fill { height: 100%; border-radius: 3px; background: var(--blue); transition: width .4s; }
+
+/* ═══════════════════════════════════════════════════════════
+   TASK SYSTEM (shared across all pages)
+═══════════════════════════════════════════════════════════ */
+.task-section { margin-bottom: 28px; }
+.ts-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ts-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ts-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink2);
+  font-weight: 500;
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ts-title:hover .edit-inline-btn { opacity: 1; }
+.ts-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+}
+.add-task-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 4px 10px;
+  border: 1px dashed var(--border2);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  transition: all .15s;
+}
+.add-task-btn:hover { background: var(--white); color: var(--ink2); border-color: var(--ink3); }
+
+/* Task Card */
+.task-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  transition: box-shadow .15s, border-color .15s, transform .1s;
+}
+.task-card:hover { box-shadow: var(--shadow); border-color: var(--border2); transform: translateY(-1px); }
+.task-card.done-card { opacity: 0.5; }
+
+.task-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+.task-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--border2);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  cursor: pointer;
+}
+.task-check.checked { background: var(--purple); border-color: var(--purple); color: #fff; }
+.task-check-icon { font-size: 10px; display: none; }
+.task-check.checked .task-check-icon { display: block; }
+
+.task-info { flex: 1; min-width: 0; }
+.task-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 3px; }
+.badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  font-family: 'DM Mono', monospace;
+}
+.badge-high { background: var(--danger-bg); color: var(--danger); }
+.badge-med { background: var(--amber-bg); color: var(--amber); }
+.badge-low { background: var(--green-bg); color: var(--green); }
+.badge-deadline { background: var(--cream2); color: var(--ink2); }
+.task-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.task-name.done-text { text-decoration: line-through; color: var(--ink3); }
+.task-meta { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.task-card:hover .task-actions { opacity: 1; }
+.btn-icon {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 7px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--ink2);
+  transition: all .15s;
+}
+.btn-icon:hover { background: var(--cream2); }
+.btn-icon.danger:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+
+/* Task Expand */
+.task-expand { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+.task-expand.open { max-height: 800px; }
+.task-expand-inner {
+  padding: 0 14px 12px 41px;
+  border-top: 1px solid var(--border);
+}
+.expand-sep { height: 1px; background: var(--border); margin: 0 -14px 10px -41px; }
+.task-guide {
+  font-size: 12px;
+  color: var(--ink2);
+  line-height: 1.7;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  background: var(--cream);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.note-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink3);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-family: 'DM Mono', monospace;
+}
+.note-area {
+  width: 100%;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--cream2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+  transition: all .15s;
+}
+.note-area:focus { outline: none; border-color: var(--purple); background: var(--white); }
+
+/* empty section */
+.tasks-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--ink3);
+  font-size: 13px;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DAV / CONSULTANT PAGE — Phase accordion toggle
+═══════════════════════════════════════════════════════════ */
+.phases-row { display: none; } /* hidden — replaced by accordion */
+
+.phase-accordion {
+  margin-bottom: 16px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s;
+}
+.phase-accordion:hover { box-shadow: var(--shadow-md); }
+
+.phase-acc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+  position: relative;
+}
+.phase-acc-header:hover { background: var(--cream2); }
+
+.phase-acc-indicator {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.phase-acc-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+.phase-acc-title {
+  font-family: 'Lora', serif;
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+  color: var(--ink);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.phase-acc-stat {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink3);
+  flex-shrink: 0;
+}
+.phase-acc-mini-bar {
+  width: 64px; height: 4px;
+  background: var(--cream3);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.phase-acc-mini-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+.phase-acc-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .15s;
+  flex-shrink: 0;
+}
+.phase-acc-header:hover .phase-acc-actions { opacity: 1; }
+.phase-acc-arrow {
+  font-size: 14px;
+  color: var(--ink3);
+  transition: transform .25s ease;
+  flex-shrink: 0;
+  transform: rotate(0deg);
+}
+.phase-acc-arrow.collapsed { transform: rotate(-90deg); }
+
+.phase-acc-body {
+  border-top: 1px solid var(--border);
+  padding: 18px 18px 18px;
+  display: block;
+  animation: accOpen .2s ease;
+}
+.phase-acc-body.collapsed { display: none; }
+@keyframes accOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* Phase content area — keep for compatibility */
+.phase-content { display: none; }
+.phase-content.active { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESOURCES PAGE
+═══════════════════════════════════════════════════════════ */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.resource-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s, transform .2s;
+}
+.resource-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.rc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rc-icon { font-size: 20px; }
+.rc-title {
+  font-family: 'Lora', serif;
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rc-title:hover .edit-inline-btn { opacity: 1; }
+.rc-del { margin-left: auto; }
+.resource-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.resource-item:last-of-type { border-bottom: none; }
+.ri-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 7px; }
+.ri-content { flex: 1; min-width: 0; }
+.ri-name { font-weight: 500; color: var(--ink); }
+.ri-link { font-size: 11px; color: var(--blue); margin-top: 1px; word-break: break-all; }
+.ri-note { font-size: 11px; color: var(--ink3); margin-top: 3px; font-style: italic; }
+.ri-actions { display: flex; gap: 4px; opacity: 0; }
+.resource-item:hover .ri-actions { opacity: 1; }
+.add-resource-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink3);
+  padding: 8px 10px;
+  border: 1px dashed var(--border2);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 10px;
+  transition: all .15s;
+}
+.add-resource-btn:hover { background: var(--cream2); color: var(--ink2); }
+.add-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink2);
+  padding: 12px 16px;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius-lg);
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  transition: all .15s;
+  justify-content: center;
+}
+.add-cat-btn:hover { background: var(--white); color: var(--ink); }
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════════════ */
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  line-height: 1;
+}
+.btn-primary { background: var(--purple); color: var(--white); border-color: var(--purple); }
+.btn-primary:hover { background: #5b21b6; border-color: #5b21b6; opacity: 1; }
+.btn-outline { background: none; color: var(--ink2); border-color: var(--border2); }
+.btn-outline:hover { background: var(--cream2); color: var(--ink); }
+.btn-ghost { background: none; color: var(--ink2); border-color: transparent; }
+.btn-ghost:hover { background: var(--cream2); }
+.btn-danger { background: none; color: var(--danger); border-color: var(--danger); }
+.btn-danger:hover { background: var(--danger-bg); }
+.btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 7px; }
+.btn-gold { background: var(--gold); color: var(--white); border-color: var(--gold); }
+.btn-gold:hover { opacity: 0.85; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30,27,75,.42);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 500px;
+  max-width: 95vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  border: 1px solid rgba(109,40,217,0.12);
+  box-shadow: 0 24px 60px rgba(30,27,75,0.18), 0 0 0 1px rgba(109,40,217,0.05);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn { from { transform: scale(0.96) translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-sm .modal-box { width: 360px; }
+.modal-title {
+  font-family: 'Lora', serif;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink2);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-family: 'DM Mono', monospace;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border2);
+  border-radius: 9px;
+  background: var(--cream2);
+  color: var(--ink);
+  transition: all .15s;
+  line-height: 1.5;
+}
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--purple);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(109,40,217,0.1);
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+
+/* Confirm box */
+.confirm-box {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  width: 340px;
+  max-width: 95vw;
+  border: 1px solid rgba(109,40,217,0.12);
+  box-shadow: 0 24px 60px rgba(30,27,75,0.18);
+}
+.confirm-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; font-family: 'Lora', serif; color: var(--ink); }
+.confirm-msg { font-size: 13px; color: var(--ink2); margin-bottom: 18px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #1e1b4b, #3730a3);
+  color: var(--white);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all .3s;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(79,70,229,0.35);
+}
+#toast.show { opacity: 1; transform: none; }
+
+/* Sidebar overlay for mobile */
+#sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 40;
+}
+#sidebar-overlay.open { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media(max-width: 768px) {
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    transform: translateX(-100%);
+    z-index: 50;
+  }
+  #sidebar.open { transform: none; }
+  .hamburger { display: block; }
+  .page { padding: 18px 16px 48px; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .global-progress-card { padding: 18px; }
+  .gp-pct { font-size: 36px; }
+  .topbar-search { display: none; }
+  .phases-row { grid-template-columns: repeat(2, 1fr); }
+  .resources-grid { grid-template-columns: 1fr; }
+}
+@media(max-width: 480px) {
+  .phases-row { grid-template-columns: 1fr; }
+  .modal-box { padding: 18px; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--cream3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink3); }
+
+/* Logo dot updated color */
+.logo-dot { background: var(--purple) !important; }
+.logo-label { color: var(--purple) !important; }
+.nav-badge { background: var(--purple) !important; }
+.gp-bar-fill { background: linear-gradient(90deg, #818cf8, #a78bfa) !important; }
+.pp-fill { transition: width .4s; }
+
+/* Phase accordion responsive */
+@media(max-width: 600px) {
+  .phase-acc-mini-bar { display: none; }
+  .phase-acc-num { display: none; }
+}
+
+/* Btn-primary updated */
+.btn-primary { background: var(--purple); color: var(--white); border-color: var(--purple); }
+.btn-primary:hover { background: #5b21b6; border-color: #5b21b6; }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--white); border-color: var(--gold); }
+
+/* Section add-task button */
+.add-task-btn:hover { background: var(--purple-bg); color: var(--purple); border-color: var(--purple); border-style: solid; }
+
+/* Page objective badge */
+.page-goal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--purple);
+  background: var(--purple-bg);
+  border: 1px solid rgba(109,40,217,0.15);
+  border-radius: 99px;
+  padding: 3px 10px;
+  margin-top: 6px;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+}
+.page-goal-badge:hover { background: var(--cream3); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══════════════════ SIDEBAR ══════════════════ -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-label">Student OS</div>
+      <div class="logo-title" id="app-name-el">
+        <div class="logo-dot"></div>
+        <span id="app-name-text">Personal OS</span>
+        <button class="edit-inline-btn" onclick="renameApp()">✎</button>
+      </div>
+    </div>
+
+    <div class="sidebar-sync">
+      <div class="sync-row">
+        <input id="sync-code-input" class="sync-input" type="text" placeholder="Sync Code…" maxlength="40" onkeydown="if(event.key==='Enter')connectSync()">
+        <button class="sync-btn" onclick="connectSync()">Sync</button>
+      </div>
+      <div class="sync-status">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-msg">Chưa kết nối — lưu cục bộ</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <!-- Rendered by JS -->
+    </nav>
+  </aside>
+
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ══════════════════ MAIN ══════════════════ -->
+  <div id="main">
+
+    <!-- TOP BAR -->
+    <div id="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title-el">
+        <span id="topbar-title-text">Dashboard</span>
+        <button class="edit-inline-btn" onclick="renameCurrentPage()">✎</button>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-search" id="search-box">
+          <span style="font-size:14px;opacity:.6">🔍</span>
+          <input type="text" id="global-search" placeholder="Tìm task…"
+            oninput="handleSearch(this.value)"
+            onkeydown="if(event.key==='Escape'){clearSearch();event.preventDefault();}">
+          <button class="search-clear-btn" id="search-clear-btn" onclick="clearSearch()" title="Xóa tìm kiếm">✕</button>
+          <span class="search-result-badge" id="search-result-badge" style="display:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--purple);background:var(--purple-bg);padding:1px 7px;border-radius:99px;white-space:nowrap"></span>
+        </div>
+        <select class="filter-select" id="priority-filter" onchange="handleFilter(this.value)">
+          <option value="">Tất cả mức độ</option>
+          <option value="high">🔴 Cao</option>
+          <option value="med">🟡 Trung bình</option>
+          <option value="low">🟢 Thấp</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ══ PAGES ══ -->
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-greeting">
+        <div class="dash-date" id="dash-date"></div>
+        <div class="dash-heading" id="dash-heading">
+          <span id="dash-heading-text">Chào mừng trở lại 👋</span>
+          <button class="edit-inline-btn" onclick="renameEl('dash-heading-text','heading')">✎</button>
+        </div>
+        <div class="dash-subheading" id="dash-sub">Hôm nay bạn muốn chinh phục điều gì?</div>
+      </div>
+
+      <!-- Global Progress -->
+      <div class="global-progress-card">
+        <div class="gp-pct" id="global-pct">0<span>%</span></div>
+        <div class="gp-right">
+          <div class="gp-label">Tiến độ tổng thể</div>
+          <div class="gp-bar-wrap"><div class="gp-bar-fill" id="global-bar" style="width:0%"></div></div>
+          <div class="gp-sub" id="global-sub">0 / 0 nhiệm vụ hoàn thành</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <!-- IELTS Widget -->
+        <div class="widget-card blue">
+          <div class="wc-label">Language Goal</div>
+          <div class="wc-title">🎓 IELTS <span style="color:var(--blue);font-size:14px">Target 8.0</span></div>
+          <div class="wc-sub">Ngày thi: <span id="ielts-exam-date-text">Chưa đặt</span></div>
+          <div class="wc-countdown" id="ielts-countdown"></div>
+          <button class="wc-edit-btn" onclick="editExamDate('ielts')">✎ Đổi ngày thi</button>
+        </div>
+
+        <!-- HSK Widget -->
+        <div class="widget-card green">
+          <div class="wc-label">Language Goal</div>
+          <div class="wc-title">🀄 HSK <span style="color:var(--green);font-size:14px">Target 4</span></div>
+          <div class="wc-sub">Ngày thi: <span id="hsk-exam-date-text">Chưa đặt</span></div>
+          <div class="wc-countdown" id="hsk-countdown"></div>
+          <button class="wc-edit-btn" onclick="editExamDate('hsk')">✎ Đổi ngày thi</button>
+        </div>
+
+        <!-- Quote Widget -->
+        <div class="widget-card gold">
+          <div class="wc-label">Motivation</div>
+          <div class="quote-text" id="quote-text">"Hành trình nghìn dặm bắt đầu từ một bước chân."</div>
+          <div class="quote-author" id="quote-author">— Lão Tử</div>
+          <div class="quote-actions">
+            <button class="btn btn-outline btn-sm" onclick="nextQuote()">↻ Quote mới</button>
+            <button class="btn btn-outline btn-sm" onclick="openQuoteEditor()">✎ Chỉnh sửa</button>
+          </div>
+        </div>
+
+        <!-- Daily Reminder -->
+        <div class="widget-card rose">
+          <div class="wc-label">📌 Nhắc nhở hôm nay</div>
+          <div id="daily-reminders"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IELTS HUB -->
+    <div class="page" id="page-ielts">
+      <div class="page-header">
+        <div class="ph-left">
+          <div class="ph-label">Language Hub</div>
+          <div class="ph-title" id="ielts-page-title">
+            <span id="ielts-page-title-text">🎓 IELTS Hub</span>
+            <button class="edit-inline-btn" onclick="renameEl('ielts-page-title-text','page')">✎</button>
+          </div>
+          <div class="ph-sub">Lộ trình luyện IELTS 8.0 — tùy chỉnh theo lịch của bạn</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-primary btn-sm" onclick="addSection('ielts')">+ Thêm giai đoạn</button>
+        </div>
+      </div>
+      <div class="page-progress">
+        <div class="pp-label"><span>Tiến độ IELTS</span><span id="ielts-pct">0%</span></div>
+        <div class="pp-bar"><div class="pp-fill" id="ielts-bar" style="width:0%;background:var(--blue)"></div></div>
+      </div>
+      <div id="ielts-sections"></div>
+    </div>
+
+    <!-- HSK HUB -->
+    <div class="page" id="page-hsk">
+      <div class="page-header">
+        <div class="ph-left">
+          <div class="ph-label">Language Hub</div>
+          <div class="ph-title" id="hsk-page-title">
+            <span id="hsk-page-title-text">🀄 HSK Hub</span>
+            <button class="edit-inline-btn" onclick="renameEl('hsk-page-title-text','page')">✎</button>
+          </div>
+          <div class="ph-sub">Lộ trình luyện HSK 4 — tùy chỉnh theo lịch của bạn</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-primary btn-sm" onclick="addSection('hsk')">+ Thêm giai đoạn</button>
+        </div>
+      </div>
+      <div class="page-progress">
+        <div class="pp-label"><span>Tiến độ HSK</span><span id="hsk-pct">0%</span></div>
+        <div class="pp-bar"><div class="pp-fill" id="hsk-bar" style="width:0%;background:var(--green)"></div></div>
+      </div>
+      <div id="hsk-sections"></div>
+    </div>
+
+    <!-- DAV RESEARCH -->
+    <div class="page" id="page-dav">
+      <div class="page-header">
+        <div class="ph-left">
+          <div class="ph-label">Research</div>
+          <div class="ph-title" id="dav-page-title">
+            <span id="dav-page-title-text">📚 DAV Research</span>
+            <button class="edit-inline-btn" onclick="renameEl('dav-page-title-text','page')">✎</button>
+          </div>
+          <div class="ph-sub" id="dav-page-sub-text">Lộ trình nghiên cứu và học thuật tại DAV</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-outline btn-sm" onclick="editPageGoal('dav')">🎯 Mục tiêu</button>
+          <button class="btn btn-primary btn-sm" onclick="addPhase('dav')">+ Thêm Phase</button>
+        </div>
+      </div>
+      <div class="page-progress">
+        <div class="pp-label"><span>Tiến độ DAV Research</span><span id="dav-pct">0%</span></div>
+        <div class="pp-bar"><div class="pp-fill" id="dav-bar" style="width:0%;background:var(--purple)"></div></div>
+      </div>
+      <div id="dav-phases-row" class="phases-row"></div>
+      <div id="dav-phase-contents"></div>
+    </div>
+
+    <!-- CONSULTANT ROAD -->
+    <div class="page" id="page-consultant">
+      <div class="page-header">
+        <div class="ph-left">
+          <div class="ph-label">Career</div>
+          <div class="ph-title" id="consultant-page-title">
+            <span id="consultant-page-title-text">💼 Consultant Road</span>
+            <button class="edit-inline-btn" onclick="renameEl('consultant-page-title-text','page')">✎</button>
+          </div>
+          <div class="ph-sub" id="consultant-page-sub-text">Lộ trình sự nghiệp tư vấn — từng bước chinh phục</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-outline btn-sm" onclick="editPageGoal('consultant')">🎯 Mục tiêu</button>
+          <button class="btn btn-primary btn-sm" onclick="addPhase('consultant')">+ Thêm Phase</button>
+        </div>
+      </div>
+      <div class="page-progress">
+        <div class="pp-label"><span>Tiến độ Consultant Road</span><span id="consultant-pct">0%</span></div>
+        <div class="pp-bar"><div class="pp-fill" id="consultant-bar" style="width:0%;background:var(--amber)"></div></div>
+      </div>
+      <div id="consultant-phases-row" class="phases-row"></div>
+      <div id="consultant-phase-contents"></div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="page" id="page-resources">
+      <div class="page-header">
+        <div class="ph-left">
+          <div class="ph-label">Library</div>
+          <div class="ph-title" id="resources-page-title">
+            <span id="resources-page-title-text">🗂️ Resources</span>
+            <button class="edit-inline-btn" onclick="renameEl('resources-page-title-text','page')">✎</button>
+          </div>
+          <div class="ph-sub">Tổng hợp tài nguyên học tập và nghiên cứu</div>
+        </div>
+        <div class="ph-right">
+          <button class="btn btn-primary btn-sm" onclick="addResourceCategory()">+ Thêm danh mục</button>
+        </div>
+      </div>
+      <div id="resources-grid" class="resources-grid"></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════════════════════════════════════════
+     MODALS
+════════════════════════════════════════ -->
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="task-modal-overlay" onclick="if(event.target===this)closeTaskModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="task-modal-title">Thêm nhiệm vụ</div>
+    <input type="hidden" id="task-modal-page">
+    <input type="hidden" id="task-modal-section">
+    <input type="hidden" id="task-modal-id">
+    <div class="field">
+      <label>Tên nhiệm vụ *</label>
+      <input type="text" id="f-task-name" placeholder="Nhập tên nhiệm vụ…">
+    </div>
+    <div class="field">
+      <label>Mức độ ưu tiên</label>
+      <select id="f-task-priority">
+        <option value="high">🔴 Cao</option>
+        <option value="med" selected>🟡 Trung bình</option>
+        <option value="low">🟢 Thấp</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Deadline</label>
+      <input type="date" id="f-task-deadline">
+    </div>
+    <div class="field">
+      <label>Hướng dẫn thực hiện (Guide)</label>
+      <textarea id="f-task-guide" placeholder="Mô tả chi tiết cách thực hiện…"></textarea>
+    </div>
+    <div class="field">
+      <label>Ghi chú (Notes)</label>
+      <textarea id="f-task-notes" placeholder="Ghi chú thêm…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeTaskModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveTask()">Lưu nhiệm vụ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay modal-sm" id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Xác nhận</div>
+    <div class="confirm-msg" id="confirm-msg">Bạn có chắc muốn thực hiện hành động này?</div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeConfirm()">Hủy</button>
+      <button class="btn btn-danger btn-sm" id="confirm-ok-btn" onclick="">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quote Editor Modal -->
+<div class="modal-overlay" id="quote-modal-overlay" onclick="if(event.target===this)closeQuoteModal()">
+  <div class="modal-box">
+    <div class="modal-title">✎ Ngân hàng Quote</div>
+    <div class="field">
+      <label>Danh sách quotes (mỗi dòng 1 quote — định dạng: "Nội dung" — Tác giả)</label>
+      <textarea id="f-quotes" style="min-height:200px" placeholder='"Học không có chí thì không thành" — Người Xưa&#10;"Your limitation—it is only your imagination." — Unknown'></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeQuoteModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveQuotes()">Lưu quotes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Date Modal -->
+<div class="modal-overlay modal-sm" id="exam-modal-overlay" onclick="if(event.target===this)closeExamModal()">
+  <div class="confirm-box">
+    <div class="confirm-title" id="exam-modal-title">Đặt ngày thi</div>
+    <input type="hidden" id="exam-modal-type">
+    <div class="field" style="margin-top:14px">
+      <label>Ngày thi</label>
+      <input type="date" id="f-exam-date">
+    </div>
+    <div class="confirm-actions" style="margin-top:10px">
+      <button class="btn btn-outline btn-sm" onclick="closeExamModal()">Hủy</button>
+      <button class="btn btn-primary btn-sm" onclick="saveExamDate()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resource Item Modal -->
+<div class="modal-overlay modal-sm" id="resource-modal-overlay" onclick="if(event.target===this)closeResourceModal()">
+  <div class="modal-box" style="width:420px">
+    <div class="modal-title" id="resource-modal-title">Thêm tài nguyên</div>
+    <input type="hidden" id="f-res-cat-id">
+    <input type="hidden" id="f-res-item-id">
+    <div class="field">
+      <label>Tên nguồn *</label>
+      <input type="text" id="f-res-name" placeholder="Vd: Cambridge IELTS 18">
+    </div>
+    <div class="field">
+      <label>Link (tùy chọn)</label>
+      <input type="text" id="f-res-link" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label>Ghi chú</label>
+      <textarea id="f-res-note" placeholder="Mô tả hoặc hướng dẫn sử dụng…" style="min-height:60px"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeResourceModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveResourceItem()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goal Modal for DAV/Consultant -->
+<div class="modal-overlay modal-sm" id="goal-modal-overlay" onclick="if(event.target===this)closeGoalModal()">
+  <div class="modal-box" style="width:400px">
+    <div class="modal-title" id="goal-modal-title">🎯 Cài đặt mục tiêu</div>
+    <input type="hidden" id="goal-modal-page">
+    <div class="field">
+      <label>Mục tiêu / Tên trang</label>
+      <input type="text" id="f-goal-title" placeholder="Vd: DAV Research — Khóa luận tốt nghiệp">
+    </div>
+    <div class="field">
+      <label>Mô tả ngắn</label>
+      <input type="text" id="f-goal-sub" placeholder="Vd: Lộ trình nghiên cứu và học thuật tại DAV">
+    </div>
+    <div class="field">
+      <label>Deadline / Ngày mục tiêu (tùy chọn)</label>
+      <input type="date" id="f-goal-date">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeGoalModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveGoal()">Lưu mục tiêu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+const NAV_PAGES = [
+  { id: 'dashboard',   icon: '🏠', label: 'Dashboard' },
+  { id: 'ielts',       icon: '🎓', label: 'IELTS Hub' },
+  { id: 'hsk',         icon: '🀄', label: 'HSK Hub' },
+  { id: 'dav',         icon: '📚', label: 'DAV Research' },
+  { id: 'consultant',  icon: '💼', label: 'Consultant Road' },
+  { id: 'resources',   icon: '🗂️', label: 'Resources' },
+];
+
+function defaultData() {
+  return {
+    appName: 'Personal OS',
+    navLabels: {},          // { pageId: customLabel }
+    pageHeadings: {},       // { elId: text }
+    pageGoals: {},          // { pageId: { target, sub } }
+    // Exam dates
+    examDates: { ielts: '', hsk: '' },
+    // Quotes
+    quotes: [
+      { text: 'Hành trình nghìn dặm bắt đầu từ một bước chân.', author: 'Lão Tử' },
+      { text: 'Học không ngừng — đó là bí quyết của thành công.', author: 'Unknown' },
+      { text: 'Sự kiên nhẫn là chìa khóa của sự thành công.', author: 'Khổng Tử' },
+      { text: "The secret of getting ahead is getting started.", author: 'Mark Twain' },
+      { text: 'Đừng đếm ngày tháng — hãy làm cho ngày tháng có ý nghĩa.', author: 'Muhammad Ali' },
+    ],
+    quoteIdx: 0,
+    // Task data: { pageId: { sections: [{id,name,tasks:[{id,name,priority,deadline,guide,notes,done}]}] } }
+    pages: {
+      ielts: { sections: [] },
+      hsk:   { sections: [] },
+      dav:   { phases: [] },       // phases: [{id,name,color,sections:[...]}]
+      consultant: { phases: [] },
+    },
+    // Resources: [{id,icon,title,items:[{id,name,link,note}]}]
+    resources: [],
+  };
+}
+
+let DATA = defaultData();
+let _isSyncing = false;
+let _syncCode = localStorage.getItem('pos_sync_code') || '';
+let currentPage = 'dashboard';
+let expandedTasks = new Set();
+let _searchQuery = '';
+let _filterPriority = '';
+let _confirmCb = null;
+let _pendingTask = null; // { page, sectionId, taskId? }
+let _resModalState = null;
+
+// ════════════════════════════════════════
+//  PERSIST / LOAD
+// ════════════════════════════════════════
+function persist() {
+  localStorage.setItem('pos_data', JSON.stringify(DATA));
+  if (_syncCode && window._fbReady) {
+    _isSyncing = true;
+    window._fbSet(window._fbRef(window._fbDb, 'personal_os/' + _syncCode), DATA)
+      .then(() => { _isSyncing = false; setSyncStatus('ok', 'Đã đồng bộ · ' + new Date().toLocaleTimeString('vi-VN')); })
+      .catch(e => { _isSyncing = false; setSyncStatus('err', 'Lỗi sync: ' + e.message); });
+  }
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem('pos_data');
+    if (raw) DATA = Object.assign(defaultData(), JSON.parse(raw));
+  } catch(e) {}
+}
+
+function connectSync() {
+  const code = document.getElementById('sync-code-input').value.trim();
+  if (!code) return;
+  _syncCode = code;
+  localStorage.setItem('pos_sync_code', code);
+  if (!window._fbReady) { document.addEventListener('firebase-ready', connectSync, {once:true}); return; }
+  setSyncStatus('ok', 'Đang kết nối…');
+  window._fbOnValue(window._fbRef(window._fbDb, 'personal_os/' + code), snap => {
+    const val = snap.val();
+    if (!_isSyncing) {
+      if (val) {
+        DATA = Object.assign(defaultData(), val);
+        renderAll();
+        setSyncStatus('ok', 'Đã kết nối · Code: ' + code);
+      } else {
+        persist();
+        setSyncStatus('ok', 'Sync mới · Code: ' + code);
+      }
+    }
+  }, err => setSyncStatus('err', 'Lỗi: ' + err.message));
+}
+
+function setSyncStatus(type, msg) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot ' + (type === 'ok' ? 'ok' : type === 'err' ? 'err' : '');
+  document.getElementById('sync-msg').textContent = msg;
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+function renderNav() {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = '';
+  NAV_PAGES.forEach(p => {
+    const label = DATA.navLabels[p.id] || p.label;
+    const active = currentPage === p.id ? 'active' : '';
+    const div = document.createElement('div');
+    div.className = 'nav-item ' + active;
+    div.onclick = (e) => { if(e.target.classList.contains('edit-inline-btn')) return; goTo(p.id); };
+    div.innerHTML = `<span class="nav-icon">${p.icon}</span><span>${esc(label)}</span>
+      <button class="edit-inline-btn" onclick="renameNav('${p.id}')">✎</button>`;
+    nav.appendChild(div);
+  });
+}
+
+function goTo(pageId) {
+  currentPage = pageId;
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  renderNav();
+  // Update topbar title
+  const p = NAV_PAGES.find(x => x.id === pageId);
+  const label = DATA.navLabels[pageId] || p.label;
+  document.getElementById('topbar-title-text').textContent = label;
+  closeSidebar();
+  updateSearchVisibility();
+  renderCurrentPage();
+}
+
+function renameNav(pageId) {
+  const current = DATA.navLabels[pageId] || NAV_PAGES.find(x=>x.id===pageId).label;
+  const newName = prompt('Đổi tên trang:', current);
+  if (!newName || newName === current) return;
+  DATA.navLabels[pageId] = newName;
+  persist();
+  renderNav();
+  if (currentPage === pageId) document.getElementById('topbar-title-text').textContent = newName;
+}
+
+function renameCurrentPage() {
+  renameNav(currentPage);
+}
+
+function renameEl(elId, hint) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const newVal = prompt('Chỉnh sửa ' + (hint||''), el.textContent);
+  if (!newVal) return;
+  el.textContent = newVal;
+  DATA.pageHeadings = DATA.pageHeadings || {};
+  DATA.pageHeadings[elId] = newVal;
+  persist();
+}
+
+function renameApp() {
+  const newName = prompt('Đổi tên ứng dụng:', DATA.appName);
+  if (!newName) return;
+  DATA.appName = newName;
+  document.getElementById('app-name-text').textContent = newName;
+  document.title = newName;
+  persist();
+}
+
+function editPageGoal(pageId) {
+  const defaults = {
+    dav: { sub: 'Lộ trình nghiên cứu và học thuật tại DAV', title: '' },
+    consultant: { sub: 'Lộ trình sự nghiệp tư vấn — từng bước chinh phục', title: '' }
+  };
+  const current = DATA.pageGoals[pageId] || defaults[pageId] || {};
+  const labels = { dav: '📚 DAV Research', consultant: '💼 Consultant Road' };
+  document.getElementById('goal-modal-title').textContent = '🎯 Mục tiêu — ' + (labels[pageId] || pageId);
+  document.getElementById('goal-modal-page').value = pageId;
+  document.getElementById('f-goal-title').value = current.title || (DATA.pageHeadings[pageId + '-page-title-text'] || labels[pageId] || '');
+  document.getElementById('f-goal-sub').value = current.sub || defaults[pageId]?.sub || '';
+  document.getElementById('f-goal-date').value = current.date || '';
+  document.getElementById('goal-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-goal-title').focus(), 50);
+}
+
+function closeGoalModal() { document.getElementById('goal-modal-overlay').classList.remove('open'); }
+
+function saveGoal() {
+  const pageId = document.getElementById('goal-modal-page').value;
+  const title = document.getElementById('f-goal-title').value.trim();
+  const sub = document.getElementById('f-goal-sub').value.trim();
+  const date = document.getElementById('f-goal-date').value;
+  DATA.pageGoals = DATA.pageGoals || {};
+  DATA.pageGoals[pageId] = { title, sub, date };
+  // Update title element
+  if (title) {
+    const titleEl = document.getElementById(pageId + '-page-title-text');
+    if (titleEl) { titleEl.textContent = title; DATA.pageHeadings[pageId + '-page-title-text'] = title; }
+  }
+  // Update sub element
+  if (sub) {
+    const subEl = document.getElementById(pageId + '-page-sub-text');
+    if (subEl) subEl.textContent = sub;
+  }
+  persist();
+  closeGoalModal();
+  showToast('Đã lưu mục tiêu!');
+}
+
+function applyPageHeadings() {
+  if (!DATA.pageHeadings) return;
+  Object.entries(DATA.pageHeadings).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+  if (DATA.appName) {
+    document.getElementById('app-name-text').textContent = DATA.appName;
+    document.title = DATA.appName;
+  }
+  // Restore page goal sub-texts and titles
+  if (DATA.pageGoals) {
+    ['dav','consultant'].forEach(pg => {
+      const goal = DATA.pageGoals[pg];
+      if (!goal) return;
+      if (goal.sub) {
+        const el = document.getElementById(pg + '-page-sub-text');
+        if (el) el.textContent = goal.sub;
+      }
+      if (goal.title) {
+        const el = document.getElementById(pg + '-page-title-text');
+        if (el) el.textContent = goal.title;
+      }
+    });
+  }
+}
+
+// Sidebar mobile
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════
+function renderDashboard() {
+  // Date
+  const now = new Date();
+  document.getElementById('dash-date').textContent =
+    now.toLocaleDateString('vi-VN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Global progress
+  let total = 0, done = 0;
+  ['ielts','hsk','dav','consultant'].forEach(pg => {
+    const p = DATA.pages[pg];
+    if (!p) return;
+    const sections = p.sections || getAllSectionsFromPhases(p.phases || []);
+    sections.forEach(s => {
+      total += (s.tasks||[]).length;
+      done  += (s.tasks||[]).filter(t=>t.done).length;
+    });
+  });
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('global-pct').innerHTML = pct + '<span>%</span>';
+  document.getElementById('global-bar').style.width = pct + '%';
+  document.getElementById('global-sub').textContent = done + ' / ' + total + ' nhiệm vụ hoàn thành';
+
+  // Countdown
+  renderCountdown('ielts');
+  renderCountdown('hsk');
+
+  // Quote
+  renderQuote();
+
+  // Daily reminders
+  renderReminders();
+}
+
+function getAllSectionsFromPhases(phases) {
+  const out = [];
+  (phases||[]).forEach(ph => (ph.sections||[]).forEach(s => out.push(s)));
+  return out;
+}
+
+function renderCountdown(type) {
+  const dateStr = DATA.examDates[type];
+  const cdEl = document.getElementById(type + '-countdown');
+  const dtEl = document.getElementById(type + '-exam-date-text');
+  if (!dateStr) { cdEl.innerHTML = '<span style="color:var(--ink3);font-size:12px">Chưa đặt ngày thi</span>'; dtEl.textContent = 'Chưa đặt'; return; }
+  const exam = new Date(dateStr);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.ceil((exam - today) / 86400000);
+  dtEl.textContent = exam.toLocaleDateString('vi-VN');
+  if (diff <= 0) { cdEl.innerHTML = '<span style="color:var(--danger)">Đã qua ngày thi!</span>'; return; }
+  const d = Math.floor(diff), h = diff * 24 % 24 | 0, m = diff * 24 * 60 % 60 | 0;
+  cdEl.innerHTML = `
+    <div class="countdown-part"><div class="countdown-num">${d}</div><div class="countdown-unit">ngày</div></div>
+    <div class="countdown-part" style="color:var(--ink3);align-self:center;margin-top:-10px">:</div>
+    <div class="countdown-part"><div class="countdown-num">${String(h).padStart(2,'0')}</div><div class="countdown-unit">giờ</div></div>
+    <div class="countdown-part" style="color:var(--ink3);align-self:center;margin-top:-10px">:</div>
+    <div class="countdown-part"><div class="countdown-num">${String(m).padStart(2,'0')}</div><div class="countdown-unit">phút</div></div>`;
+}
+
+function renderQuote() {
+  const quotes = DATA.quotes || [];
+  if (!quotes.length) return;
+  const q = quotes[DATA.quoteIdx % quotes.length];
+  document.getElementById('quote-text').textContent = '"' + q.text + '"';
+  document.getElementById('quote-author').textContent = '— ' + (q.author || '');
+}
+
+function nextQuote() {
+  DATA.quoteIdx = ((DATA.quoteIdx || 0) + 1) % (DATA.quotes||[]).length;
+  renderQuote();
+  persist();
+}
+
+function renderReminders() {
+  const el = document.getElementById('daily-reminders');
+  const today = new Date().toISOString().split('T')[0];
+  let items = [];
+  const pageNames = { ielts:'IELTS', hsk:'HSK', dav:'DAV', consultant:'Consultant' };
+  ['ielts','hsk','dav','consultant'].forEach(pg => {
+    const p = DATA.pages[pg];
+    if (!p) return;
+    const sections = p.sections || getAllSectionsFromPhases(p.phases || []);
+    sections.forEach(s => (s.tasks||[]).forEach(t => {
+      if (t.deadline === today && !t.done) items.push({...t, _page: pg});
+    }));
+  });
+  if (!items.length) { el.innerHTML = '<div class="reminder-empty">🎉 Không có deadline hôm nay!</div>'; return; }
+  el.innerHTML = items.slice(0,5).map(t => `
+    <div class="reminder-item">
+      <span class="reminder-priority pri-${t.priority||'med'}">${{high:'Cao',med:'Trung bình',low:'Thấp'}[t.priority||'med']}</span>
+      <span class="reminder-name">${esc(t.name)}</span>
+      <span class="reminder-page">${pageNames[t._page]||t._page}</span>
+    </div>`).join('');
+}
+
+// Exam Date
+function editExamDate(type) {
+  document.getElementById('exam-modal-type').value = type;
+  document.getElementById('exam-modal-title').textContent = type === 'ielts' ? 'Ngày thi IELTS' : 'Ngày thi HSK';
+  document.getElementById('f-exam-date').value = DATA.examDates[type] || '';
+  document.getElementById('exam-modal-overlay').classList.add('open');
+}
+function closeExamModal() { document.getElementById('exam-modal-overlay').classList.remove('open'); }
+function saveExamDate() {
+  const type = document.getElementById('exam-modal-type').value;
+  DATA.examDates[type] = document.getElementById('f-exam-date').value;
+  persist();
+  renderCountdown(type);
+  closeExamModal();
+}
+
+// Quote Editor
+function openQuoteEditor() {
+  document.getElementById('f-quotes').value = (DATA.quotes||[]).map(q => `"${q.text}" — ${q.author}`).join('\n');
+  document.getElementById('quote-modal-overlay').classList.add('open');
+}
+function closeQuoteModal() { document.getElementById('quote-modal-overlay').classList.remove('open'); }
+function saveQuotes() {
+  const lines = document.getElementById('f-quotes').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  DATA.quotes = lines.map(line => {
+    const match = line.match(/^"(.+?)"\s*[—\-]+\s*(.+)$/);
+    if (match) return { text: match[1], author: match[2] };
+    return { text: line.replace(/^"|"$/g,''), author: 'Unknown' };
+  });
+  DATA.quoteIdx = 0;
+  persist();
+  renderQuote();
+  closeQuoteModal();
+  showToast('Đã lưu quotes!');
+}
+
+// ════════════════════════════════════════
+//  SECTION-BASED PAGES (IELTS, HSK)
+// ════════════════════════════════════════
+function renderSectionPage(pageId) {
+  const page = DATA.pages[pageId];
+  if (!page) return;
+  const container = document.getElementById(pageId + '-sections');
+  const sections = page.sections || [];
+
+  const { done, total } = countTasks(sections.flatMap(s=>s.tasks||[]));
+  const pct = total ? Math.round(done/total*100) : 0;
+  const pctEl = document.getElementById(pageId + '-pct');
+  const barEl = document.getElementById(pageId + '-bar');
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (barEl) barEl.style.width = pct + '%';
+
+  container.innerHTML = '';
+  if (!sections.length) {
+    container.innerHTML = `<div class="tasks-empty">Chưa có giai đoạn nào.<br>Nhấn "+ Thêm giai đoạn" để bắt đầu!</div>`;
+    return;
+  }
+  sections.forEach(section => container.appendChild(renderSection(pageId, section, null)));
+}
+
+function renderSection(pageId, section, phaseId) {
+  const wrap = document.createElement('div');
+  wrap.className = 'task-section';
+  wrap.id = 'section-' + section.id;
+
+  const tasks = (section.tasks || []).filter(t => filterTask(t));
+  const { done, total: tot } = countTasks(section.tasks || []);
+  const color = section.color || '#378ADD';
+
+  wrap.innerHTML = `
+    <div class="ts-header">
+      <div class="ts-dot" style="background:${color}"></div>
+      <div class="ts-title" style="color:${color}">
+        <span id="section-name-${section.id}">${esc(section.name)}</span>
+        <button class="edit-inline-btn" onclick="renameSection('${pageId}','${phaseId||''}','${section.id}')">✎</button>
+      </div>
+      <span class="ts-count">${done}/${section.tasks?.length||0}</span>
+      <button class="add-task-btn" onclick="openAddTask('${pageId}','${section.id}','${phaseId||''}')">+ Task</button>
+      <button class="btn-icon danger" onclick="confirmDeleteSection('${pageId}','${phaseId||''}','${section.id}')" title="Xóa section">✕</button>
+    </div>`;
+
+  if (!tasks.length && (section.tasks||[]).length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'tasks-empty';
+    empty.textContent = 'Chưa có task nào. Nhấn "+ Task" để thêm!';
+    wrap.appendChild(empty);
+  } else {
+    tasks.forEach(t => wrap.appendChild(renderTaskCard(pageId, section.id, t, phaseId)));
+  }
+  return wrap;
+}
+
+function addSection(pageId) {
+  const name = prompt('Tên giai đoạn mới:');
+  if (!name) return;
+  const id = 'sec_' + Date.now();
+  const colors = ['#378ADD','#3B6D11','#9a7a08','#8b2248','#4a2d90','#9a4e0a'];
+  const color = colors[Math.floor(Math.random()*colors.length)];
+  DATA.pages[pageId].sections = DATA.pages[pageId].sections || [];
+  DATA.pages[pageId].sections.push({ id, name, color, tasks: [] });
+  persist();
+  renderSectionPage(pageId);
+  updateGlobalProgress();
+}
+
+function renameSection(pageId, phaseId, sectionId) {
+  const section = findSection(pageId, phaseId, sectionId);
+  if (!section) return;
+  const newName = prompt('Đổi tên giai đoạn:', section.name);
+  if (!newName) return;
+  section.name = newName;
+  persist();
+  const el = document.getElementById('section-name-' + sectionId);
+  if (el) el.textContent = newName;
+}
+
+function confirmDeleteSection(pageId, phaseId, sectionId) {
+  openConfirm('Xóa giai đoạn?', 'Tất cả task trong giai đoạn này sẽ bị xóa.', () => {
+    deleteSection(pageId, phaseId, sectionId);
+  });
+}
+
+function deleteSection(pageId, phaseId, sectionId) {
+  if (phaseId) {
+    const ph = DATA.pages[pageId].phases.find(p=>p.id===phaseId);
+    if (ph) ph.sections = ph.sections.filter(s=>s.id!==sectionId);
+  } else {
+    DATA.pages[pageId].sections = DATA.pages[pageId].sections.filter(s=>s.id!==sectionId);
+  }
+  persist();
+  renderCurrentPage();
+  updateGlobalProgress();
+}
+
+// ════════════════════════════════════════
+//  PHASE-BASED PAGES (DAV, CONSULTANT) — Accordion Toggle
+// ════════════════════════════════════════
+const PHASE_COLORS = ['#2563eb','#d4a017','#b45309','#be185d','#16803c','#6d28d9'];
+// Track which phases are collapsed per page
+const _phaseCollapsed = {};
+
+function renderPhasePage(pageId) {
+  const page = DATA.pages[pageId];
+  const phases = page.phases || [];
+  // Hide old phases-row (CSS already hides it, but ensure)
+  const rowEl = document.getElementById(pageId + '-phases-row');
+  const contentEl = document.getElementById(pageId + '-phase-contents');
+
+  if (rowEl) rowEl.innerHTML = '';
+  contentEl.innerHTML = '';
+
+  if (!phases.length) {
+    contentEl.innerHTML = `<div class="tasks-empty">Chưa có Phase nào. Nhấn "+ Thêm Phase"!</div>`;
+    return;
+  }
+
+  // Page-level progress
+  let pageDone = 0, pageTotal = 0;
+  phases.forEach(ph => {
+    const c = countTasksInPhase(ph);
+    pageDone += c.done; pageTotal += c.total;
+  });
+  const pagePct = pageTotal ? Math.round(pageDone/pageTotal*100) : 0;
+  const pctEl = document.getElementById(pageId + '-pct');
+  const barEl = document.getElementById(pageId + '-bar');
+  if (pctEl) pctEl.textContent = pagePct + '%';
+  if (barEl) barEl.style.width = pagePct + '%';
+
+  phases.forEach((ph, idx) => {
+    const { done, total } = countTasksInPhase(ph);
+    const pct = total ? Math.round(done/total*100) : 0;
+    const color = ph.color || PHASE_COLORS[idx % PHASE_COLORS.length];
+    const key = pageId + '_' + ph.id;
+    if (_phaseCollapsed[key] === undefined) _phaseCollapsed[key] = (idx !== 0);
+    const collapsed = _phaseCollapsed[key];
+
+    const acc = document.createElement('div');
+    acc.className = 'phase-accordion';
+    acc.id = 'phase-acc-' + ph.id;
+
+    const header = document.createElement('div');
+    header.className = 'phase-acc-header';
+    header.innerHTML = `
+      <div class="phase-acc-indicator" style="background:${color}"></div>
+      <span class="phase-acc-num">Phase ${idx+1}</span>
+      <div class="phase-acc-title" id="pname-${ph.id}">${esc(ph.name)}</div>
+      <div class="phase-acc-mini-bar"><div class="phase-acc-mini-fill" style="background:${color};width:${pct}%"></div></div>
+      <span class="phase-acc-stat">${done}/${total} · ${pct}%</span>
+      <div class="phase-acc-actions">
+        <button class="btn-icon" onclick="event.stopPropagation();renamePhase('${pageId}','${ph.id}')" title="Đổi tên">✎</button>
+        <button class="btn-icon" onclick="event.stopPropagation();addPhaseSection('${pageId}','${ph.id}')" title="Thêm section">+ Giai đoạn</button>
+        <button class="btn-icon danger" onclick="event.stopPropagation();confirmDeletePhase('${pageId}','${ph.id}')" title="Xóa phase">✕</button>
+      </div>
+      <span class="phase-acc-arrow${collapsed?' collapsed':''}">▾</span>`;
+    header.onclick = () => togglePhaseAccordion(pageId, ph.id);
+    acc.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'phase-acc-body' + (collapsed ? ' collapsed' : '');
+    body.id = 'phase-body-' + ph.id;
+
+    (ph.sections || []).forEach(s => body.appendChild(renderSection(pageId, s, ph.id)));
+    if (!(ph.sections||[]).length) {
+      const empty = document.createElement('div');
+      empty.className = 'tasks-empty';
+      empty.textContent = 'Chưa có giai đoạn. Nhấn "+ Giai đoạn" để thêm!';
+      body.appendChild(empty);
+    }
+    acc.appendChild(body);
+    contentEl.appendChild(acc);
+  });
+}
+
+function togglePhaseAccordion(pageId, phaseId) {
+  const key = pageId + '_' + phaseId;
+  _phaseCollapsed[key] = !_phaseCollapsed[key];
+  const body = document.getElementById('phase-body-' + phaseId);
+  const header = document.getElementById('phase-acc-' + phaseId)?.querySelector('.phase-acc-arrow');
+  if (body) body.classList.toggle('collapsed', _phaseCollapsed[key]);
+  if (header) header.classList.toggle('collapsed', _phaseCollapsed[key]);
+}
+
+function switchPhase(pageId, phaseId) {
+  // Kept for backward compat — just expand the accordion
+  const key = pageId + '_' + phaseId;
+  _phaseCollapsed[key] = false;
+  const body = document.getElementById('phase-body-' + phaseId);
+  const header = document.getElementById('phase-acc-' + phaseId)?.querySelector('.phase-acc-arrow');
+  if (body) body.classList.remove('collapsed');
+  if (header) header.classList.remove('collapsed');
+}
+
+function addPhase(pageId) {
+  const name = prompt('Tên Phase mới:');
+  if (!name) return;
+  const id = 'ph_' + Date.now();
+  const color = PHASE_COLORS[(DATA.pages[pageId].phases||[]).length % PHASE_COLORS.length];
+  DATA.pages[pageId].phases = DATA.pages[pageId].phases || [];
+  DATA.pages[pageId].phases.push({ id, name, color, sections: [] });
+  persist();
+  renderPhasePage(pageId);
+}
+
+function renamePhase(pageId, phaseId) {
+  const ph = DATA.pages[pageId].phases.find(p=>p.id===phaseId);
+  if (!ph) return;
+  const newName = prompt('Đổi tên Phase:', ph.name);
+  if (!newName) return;
+  ph.name = newName;
+  persist();
+  // Update accordion title
+  const el = document.getElementById('pname-' + phaseId);
+  if (el) el.textContent = newName;
+}
+
+function confirmDeletePhase(pageId, phaseId) {
+  openConfirm('Xóa Phase?', 'Tất cả giai đoạn và task trong phase này sẽ bị xóa vĩnh viễn.', () => {
+    DATA.pages[pageId].phases = DATA.pages[pageId].phases.filter(p=>p.id!==phaseId);
+    persist();
+    renderPhasePage(pageId);
+    updateGlobalProgress();
+  });
+}
+
+function addPhaseSection(pageId, phaseId) {
+  const name = prompt('Tên giai đoạn trong Phase:');
+  if (!name) return;
+  const ph = DATA.pages[pageId].phases.find(p=>p.id===phaseId);
+  if (!ph) return;
+  ph.sections = ph.sections || [];
+  const id = 'sec_' + Date.now();
+  const colors = ['#378ADD','#3B6D11','#9a7a08','#8b2248','#4a2d90'];
+  ph.sections.push({ id, name, color: colors[ph.sections.length%colors.length], tasks: [] });
+  persist();
+  renderPhasePage(pageId);
+}
+
+function countTasksInPhase(ph) {
+  let done = 0, total = 0;
+  (ph.sections||[]).forEach(s => { total += (s.tasks||[]).length; done += (s.tasks||[]).filter(t=>t.done).length; });
+  return { done, total };
+}
+
+// ════════════════════════════════════════
+//  TASK CRUD
+// ════════════════════════════════════════
+function renderTaskCard(pageId, sectionId, task, phaseId) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'task-card' + (task.done ? ' done-card' : '');
+  wrapper.id = 'task-' + task.id;
+
+  const deadlineStr = task.deadline ? `<span class="badge badge-deadline">📅 ${task.deadline}</span>` : '';
+  const priLabel = {high:'Cao',med:'Trung bình',low:'Thấp'}[task.priority||'med'];
+
+  wrapper.innerHTML = `
+    <div class="task-main" onclick="toggleExpand('${task.id}')">
+      <div class="task-check${task.done?' checked':''}" onclick="event.stopPropagation();toggleDone('${pageId}','${sectionId}','${task.id}','${phaseId||''}')">
+        <span class="task-check-icon">✓</span>
+      </div>
+      <div class="task-info">
+        <div class="task-badges">
+          <span class="badge badge-${task.priority||'med'}">${priLabel}</span>
+          ${deadlineStr}
+        </div>
+        <div class="task-name${task.done?' done-text':''}">${esc(task.name)}</div>
+      </div>
+      <div class="task-actions" onclick="event.stopPropagation()">
+        <button class="btn-icon" onclick="openEditTask('${pageId}','${sectionId}','${task.id}','${phaseId||''}')" title="Sửa">✎</button>
+        <button class="btn-icon danger" onclick="confirmDeleteTask('${pageId}','${sectionId}','${task.id}','${phaseId||''}')">✕</button>
+      </div>
+    </div>
+    <div class="task-expand${expandedTasks.has(task.id)?' open':''}" id="expand-${task.id}">
+      <div class="task-expand-inner">
+        <div class="expand-sep"></div>
+        ${task.guide ? `<div class="task-guide">${esc(task.guide)}</div>` : ''}
+        <div class="note-label">📝 Ghi chú cá nhân</div>
+        <textarea class="note-area" placeholder="Ghi chú tiến độ của bạn…" onchange="saveNote('${pageId}','${sectionId}','${task.id}','${phaseId||''}',this.value)">${esc(task.notes||'')}</textarea>
+      </div>
+    </div>`;
+  return wrapper;
+}
+
+function toggleExpand(taskId) {
+  if (expandedTasks.has(taskId)) expandedTasks.delete(taskId);
+  else expandedTasks.add(taskId);
+  const el = document.getElementById('expand-' + taskId);
+  if (el) el.classList.toggle('open', expandedTasks.has(taskId));
+}
+
+function toggleDone(pageId, sectionId, taskId, phaseId) {
+  const t = findTask(pageId, sectionId, taskId, phaseId);
+  if (!t) return;
+  t.done = !t.done;
+  persist();
+  const card = document.getElementById('task-' + taskId);
+  if (card) {
+    card.classList.toggle('done-card', t.done);
+    card.querySelector('.task-check').classList.toggle('checked', t.done);
+    card.querySelector('.task-name').classList.toggle('done-text', t.done);
+  }
+  updateGlobalProgress();
+  updatePageProgress(pageId);
+  updatePhaseMiniCard(pageId, phaseId);
+  renderReminders();
+}
+
+function saveNote(pageId, sectionId, taskId, phaseId, val) {
+  const t = findTask(pageId, sectionId, taskId, phaseId);
+  if (t) { t.notes = val; persist(); }
+}
+
+function openAddTask(pageId, sectionId, phaseId) {
+  _pendingTask = { pageId, sectionId, phaseId: phaseId||'', taskId: null };
+  document.getElementById('task-modal-title').textContent = 'Thêm nhiệm vụ mới';
+  document.getElementById('f-task-name').value = '';
+  document.getElementById('f-task-priority').value = 'med';
+  document.getElementById('f-task-deadline').value = '';
+  document.getElementById('f-task-guide').value = '';
+  document.getElementById('f-task-notes').value = '';
+  document.getElementById('task-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-task-name').focus(), 50);
+}
+
+function openEditTask(pageId, sectionId, taskId, phaseId) {
+  const t = findTask(pageId, sectionId, taskId, phaseId);
+  if (!t) return;
+  _pendingTask = { pageId, sectionId, phaseId: phaseId||'', taskId };
+  document.getElementById('task-modal-title').textContent = 'Chỉnh sửa nhiệm vụ';
+  document.getElementById('f-task-name').value = t.name;
+  document.getElementById('f-task-priority').value = t.priority || 'med';
+  document.getElementById('f-task-deadline').value = t.deadline || '';
+  document.getElementById('f-task-guide').value = t.guide || '';
+  document.getElementById('f-task-notes').value = t.notes || '';
+  document.getElementById('task-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('f-task-name').focus(), 50);
+}
+
+function closeTaskModal() { document.getElementById('task-modal-overlay').classList.remove('open'); }
+
+function saveTask() {
+  const name = document.getElementById('f-task-name').value.trim();
+  if (!name) { document.getElementById('f-task-name').focus(); return; }
+  const { pageId, sectionId, phaseId, taskId } = _pendingTask;
+  const taskData = {
+    name,
+    priority: document.getElementById('f-task-priority').value,
+    deadline: document.getElementById('f-task-deadline').value,
+    guide: document.getElementById('f-task-guide').value.trim(),
+    notes: document.getElementById('f-task-notes').value.trim(),
+  };
+
+  if (taskId) {
+    const t = findTask(pageId, sectionId, taskId, phaseId);
+    if (t) Object.assign(t, taskData);
+  } else {
+    const section = findSection(pageId, phaseId, sectionId);
+    if (section) {
+      section.tasks = section.tasks || [];
+      section.tasks.push({ id: 'task_'+Date.now(), done: false, ...taskData });
+    }
+  }
+  persist();
+  closeTaskModal();
+  renderCurrentPage();
+  updateGlobalProgress();
+  showToast(taskId ? 'Đã cập nhật task!' : 'Đã thêm task mới!');
+}
+
+function confirmDeleteTask(pageId, sectionId, taskId, phaseId) {
+  openConfirm('Xóa nhiệm vụ?', 'Task này sẽ bị xóa vĩnh viễn.', () => {
+    const section = findSection(pageId, phaseId, sectionId);
+    if (section) section.tasks = section.tasks.filter(t=>t.id!==taskId);
+    persist();
+    renderCurrentPage();
+    updateGlobalProgress();
+  });
+}
+
+// ════════════════════════════════════════
+//  FIND HELPERS
+// ════════════════════════════════════════
+function findSection(pageId, phaseId, sectionId) {
+  const page = DATA.pages[pageId];
+  if (!page) return null;
+  if (phaseId) {
+    const ph = (page.phases||[]).find(p=>p.id===phaseId);
+    return ph ? (ph.sections||[]).find(s=>s.id===sectionId) : null;
+  }
+  return (page.sections||[]).find(s=>s.id===sectionId);
+}
+
+function findTask(pageId, sectionId, taskId, phaseId) {
+  const s = findSection(pageId, phaseId, sectionId);
+  return s ? (s.tasks||[]).find(t=>t.id===taskId) : null;
+}
+
+function countTasks(tasks) {
+  return { done: tasks.filter(t=>t.done).length, total: tasks.length };
+}
+
+// ════════════════════════════════════════
+//  SEARCH & FILTER
+// ════════════════════════════════════════
+function handleSearch(val) {
+  _searchQuery = val.toLowerCase().trim();
+  const clearBtn = document.getElementById('search-clear-btn');
+  const badge = document.getElementById('search-result-badge');
+  if (clearBtn) clearBtn.style.display = _searchQuery ? 'block' : 'none';
+
+  // Only re-render task pages
+  if (currentPage !== 'dashboard' && currentPage !== 'resources') {
+    renderCurrentPage();
+  }
+
+  // Count matching tasks across ALL pages for the badge
+  if (_searchQuery && badge) {
+    let count = 0;
+    ['ielts','hsk','dav','consultant'].forEach(pg => {
+      const p = DATA.pages[pg];
+      if (!p) return;
+      const sections = p.sections || getAllSectionsFromPhases(p.phases || []);
+      sections.forEach(s => { count += (s.tasks||[]).filter(t => filterTask(t)).length; });
+    });
+    badge.style.display = 'inline';
+    badge.textContent = count + ' kết quả';
+  } else if (badge) {
+    badge.style.display = 'none';
+  }
+}
+
+function clearSearch() {
+  _searchQuery = '';
+  _filterPriority = '';
+  const input = document.getElementById('global-search');
+  const filter = document.getElementById('priority-filter');
+  const clearBtn = document.getElementById('search-clear-btn');
+  const badge = document.getElementById('search-result-badge');
+  if (input) input.value = '';
+  if (filter) filter.value = '';
+  if (clearBtn) clearBtn.style.display = 'none';
+  if (badge) badge.style.display = 'none';
+  if (currentPage !== 'dashboard' && currentPage !== 'resources') renderCurrentPage();
+}
+
+function handleFilter(val) {
+  _filterPriority = val;
+  renderCurrentPage();
+}
+
+function filterTask(t) {
+  const q = _searchQuery;
+  const p = _filterPriority;
+  if (q) {
+    const searchIn = [t.name, t.guide||'', t.notes||''].join(' ').toLowerCase();
+    if (!searchIn.includes(q)) return false;
+  }
+  if (p && (t.priority||'med') !== p) return false;
+  return true;
+}
+
+function applySearchFilter() {
+  // Don't re-render dashboard or resources when searching (no tasks there)
+  if (currentPage === 'dashboard' || currentPage === 'resources') return;
+  renderCurrentPage();
+}
+
+// ════════════════════════════════════════
+//  RESOURCES PAGE
+// ════════════════════════════════════════
+function renderResourcesPage() {
+  const grid = document.getElementById('resources-grid');
+  const cats = DATA.resources || [];
+  grid.innerHTML = '';
+  cats.forEach(cat => grid.appendChild(renderResourceCard(cat)));
+}
+
+function renderResourceCard(cat) {
+  const card = document.createElement('div');
+  card.className = 'resource-card';
+  card.id = 'rescat-' + cat.id;
+  card.innerHTML = `
+    <div class="rc-header">
+      <span class="rc-icon">${cat.icon||'📂'}</span>
+      <span class="rc-title">
+        <span id="rescat-title-${cat.id}">${esc(cat.title)}</span>
+        <button class="edit-inline-btn" onclick="renameResCategory('${cat.id}')">✎</button>
+      </span>
+      <button class="btn-icon danger rc-del" onclick="confirmDeleteResCategory('${cat.id}')">✕</button>
+    </div>
+    <div id="rescat-items-${cat.id}">
+      ${(cat.items||[]).map(item => renderResourceItemHTML(cat.id, item)).join('')}
+    </div>
+    <button class="add-resource-btn" onclick="openAddResource('${cat.id}')">+ Thêm nguồn</button>`;
+  return card;
+}
+
+function renderResourceItemHTML(catId, item) {
+  return `<div class="resource-item" id="resitem-${item.id}">
+    <div class="ri-dot"></div>
+    <div class="ri-content">
+      <div class="ri-name">${esc(item.name)}</div>
+      ${item.link ? `<div class="ri-link"><a href="${esc(item.link)}" target="_blank">${esc(item.link)}</a></div>` : ''}
+      ${item.note ? `<div class="ri-note">${esc(item.note)}</div>` : ''}
+    </div>
+    <div class="ri-actions">
+      <button class="btn-icon" onclick="openEditResource('${catId}','${item.id}')">✎</button>
+      <button class="btn-icon danger" onclick="confirmDeleteResItem('${catId}','${item.id}')">✕</button>
+    </div>
+  </div>`;
+}
+
+function addResourceCategory() {
+  const title = prompt('Tên danh mục tài nguyên:');
+  if (!title) return;
+  const icons = ['📚','🎧','✏️','🖥️','📰','🎓','🔬','💡','🌐','📹'];
+  const icon = icons[Math.floor(Math.random()*icons.length)];
+  DATA.resources = DATA.resources || [];
+  DATA.resources.push({ id: 'cat_'+Date.now(), icon, title, items: [] });
+  persist();
+  renderResourcesPage();
+}
+
+function renameResCategory(catId) {
+  const cat = (DATA.resources||[]).find(c=>c.id===catId);
+  if (!cat) return;
+  const newName = prompt('Đổi tên danh mục:', cat.title);
+  if (!newName) return;
+  cat.title = newName;
+  persist();
+  const el = document.getElementById('rescat-title-' + catId);
+  if (el) el.textContent = newName;
+}
+
+function confirmDeleteResCategory(catId) {
+  openConfirm('Xóa danh mục?', 'Tất cả tài nguyên trong danh mục này sẽ bị xóa.', () => {
+    DATA.resources = (DATA.resources||[]).filter(c=>c.id!==catId);
+    persist();
+    renderResourcesPage();
+  });
+}
+
+function openAddResource(catId) {
+  _resModalState = { catId, itemId: null };
+  document.getElementById('resource-modal-title').textContent = 'Thêm tài nguyên';
+  document.getElementById('f-res-cat-id').value = catId;
+  document.getElementById('f-res-item-id').value = '';
+  document.getElementById('f-res-name').value = '';
+  document.getElementById('f-res-link').value = '';
+  document.getElementById('f-res-note').value = '';
+  document.getElementById('resource-modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-res-name').focus(),50);
+}
+
+function openEditResource(catId, itemId) {
+  const cat = (DATA.resources||[]).find(c=>c.id===catId);
+  const item = cat ? (cat.items||[]).find(i=>i.id===itemId) : null;
+  if (!item) return;
+  _resModalState = { catId, itemId };
+  document.getElementById('resource-modal-title').textContent = 'Chỉnh sửa tài nguyên';
+  document.getElementById('f-res-name').value = item.name;
+  document.getElementById('f-res-link').value = item.link || '';
+  document.getElementById('f-res-note').value = item.note || '';
+  document.getElementById('resource-modal-overlay').classList.add('open');
+}
+
+function closeResourceModal() { document.getElementById('resource-modal-overlay').classList.remove('open'); }
+
+function saveResourceItem() {
+  const name = document.getElementById('f-res-name').value.trim();
+  if (!name) { document.getElementById('f-res-name').focus(); return; }
+  const { catId, itemId } = _resModalState;
+  const cat = (DATA.resources||[]).find(c=>c.id===catId);
+  if (!cat) return;
+  const itemData = { name, link: document.getElementById('f-res-link').value.trim(), note: document.getElementById('f-res-note').value.trim() };
+  if (itemId) {
+    const item = (cat.items||[]).find(i=>i.id===itemId);
+    if (item) Object.assign(item, itemData);
+  } else {
+    cat.items = cat.items || [];
+    cat.items.push({ id: 'ri_'+Date.now(), ...itemData });
+  }
+  persist();
+  closeResourceModal();
+  // Re-render items in card
+  const itemsEl = document.getElementById('rescat-items-' + catId);
+  if (itemsEl) itemsEl.innerHTML = (cat.items||[]).map(i=>renderResourceItemHTML(catId,i)).join('');
+  showToast('Đã lưu tài nguyên!');
+}
+
+function confirmDeleteResItem(catId, itemId) {
+  openConfirm('Xóa tài nguyên?', 'Mục này sẽ bị xóa.', () => {
+    const cat = (DATA.resources||[]).find(c=>c.id===catId);
+    if (cat) cat.items = (cat.items||[]).filter(i=>i.id!==itemId);
+    persist();
+    const el = document.getElementById('resitem-' + itemId);
+    if (el) el.remove();
+  });
+}
+
+// ════════════════════════════════════════
+//  PROGRESS UPDATES
+// ════════════════════════════════════════
+function updateGlobalProgress() {
+  let total = 0, done = 0;
+  ['ielts','hsk','dav','consultant'].forEach(pg => {
+    const p = DATA.pages[pg];
+    if (!p) return;
+    const sections = p.sections || getAllSectionsFromPhases(p.phases || []);
+    sections.forEach(s => { total += (s.tasks||[]).length; done += (s.tasks||[]).filter(t=>t.done).length; });
+  });
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('global-pct').innerHTML = pct + '<span>%</span>';
+  document.getElementById('global-bar').style.width = pct + '%';
+  document.getElementById('global-sub').textContent = done + ' / ' + total + ' nhiệm vụ hoàn thành';
+}
+
+function updatePageProgress(pageId) {
+  const page = DATA.pages[pageId];
+  if (!page) return;
+  const sections = page.sections || getAllSectionsFromPhases(page.phases || []);
+  let total = 0, done = 0;
+  sections.forEach(s => { total += (s.tasks||[]).length; done += (s.tasks||[]).filter(t=>t.done).length; });
+  const pct = total ? Math.round(done/total*100) : 0;
+  const pctEl = document.getElementById(pageId + '-pct');
+  const barEl = document.getElementById(pageId + '-bar');
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (barEl) barEl.style.width = pct + '%';
+}
+
+function updatePhaseMiniCard(pageId, phaseId) {
+  if (!phaseId) return;
+  const ph = (DATA.pages[pageId]?.phases||[]).find(p=>p.id===phaseId);
+  if (!ph) return;
+  const { done, total } = countTasksInPhase(ph);
+  const pct = total ? Math.round(done/total*100) : 0;
+  const acc = document.getElementById('phase-acc-' + phaseId);
+  if (acc) {
+    const statEl = acc.querySelector('.phase-acc-stat');
+    const fillEl = acc.querySelector('.phase-acc-mini-fill');
+    if (statEl) statEl.textContent = done + '/' + total + ' · ' + pct + '%';
+    if (fillEl) fillEl.style.width = pct + '%';
+  }
+}
+
+// ════════════════════════════════════════
+//  CONFIRM MODAL
+// ════════════════════════════════════════
+function openConfirm(title, msg, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  _confirmCb = cb;
+  document.getElementById('confirm-ok-btn').onclick = () => { closeConfirm(); if(_confirmCb) _confirmCb(); };
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
+
+// ════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════
+let _toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════════════
+//  RENDER ALL
+// ════════════════════════════════════════
+function renderCurrentPage() {
+  switch(currentPage) {
+    case 'dashboard': renderDashboard(); break;
+    case 'ielts': renderSectionPage('ielts'); break;
+    case 'hsk': renderSectionPage('hsk'); break;
+    case 'dav': renderPhasePage('dav'); break;
+    case 'consultant': renderPhasePage('consultant'); break;
+    case 'resources': renderResourcesPage(); break;
+  }
+}
+
+function renderAll() {
+  applyPageHeadings();
+  renderNav();
+  renderDashboard();
+  renderSectionPage('ielts');
+  renderSectionPage('hsk');
+  renderPhasePage('dav');
+  renderPhasePage('consultant');
+  renderResourcesPage();
+}
+
+// Show/hide search bar based on page type
+function updateSearchVisibility() {
+  const taskPages = ['ielts','hsk','dav','consultant'];
+  const searchBox = document.getElementById('search-box');
+  const filterEl = document.getElementById('priority-filter');
+  const show = taskPages.includes(currentPage);
+  if (searchBox) searchBox.style.display = show ? '' : 'none';
+  if (filterEl) filterEl.style.display = show ? '' : 'none';
+  // Clear search when leaving task pages
+  if (!show) {
+    clearSearch();
+  }
+}
+
+// ════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════
+//  KEYBOARD
+// ════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeTaskModal();
+    closeConfirm();
+    closeQuoteModal();
+    closeExamModal();
+    closeResourceModal();
+    closeGoalModal();
+    closeSidebar();
+  }
+  if (e.key === 'Enter' && document.getElementById('task-modal-overlay').classList.contains('open')) {
+    if (document.activeElement.tagName !== 'TEXTAREA') saveTask();
+  }
+});
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+loadLocal();
+renderAll();
+goTo('dashboard');
+if (_syncCode) {
+  document.getElementById('sync-code-input').value = _syncCode;
+  document.addEventListener('firebase-ready', connectSync, {once:true});
+  if (window._fbReady) connectSync();
+}
+
+// Update countdown every minute
+setInterval(() => { renderCountdown('ielts'); renderCountdown('hsk'); }, 60000);
+</script>
+</body>
+</html>
